@@ -161,7 +161,7 @@ namespace clojure.lang
         /// <summary>
         /// Reader/writer lock for the reference.
         /// </summary>
-        readonly ReaderWriterLockSlim _lock;
+        // readonly ReaderWriterLockSlim _lock;
 
         /// <summary>
         /// Info on the transaction locking this ref.
@@ -250,7 +250,7 @@ namespace clojure.lang
         {
             _id = _ids.getAndIncrement();
             _faults = new AtomicInteger();
-            _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+            // _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
             _tvals = new TVal(initval, 0);
         }
 
@@ -344,14 +344,14 @@ namespace clojure.lang
         {
             try
             {
-                _lock.EnterReadLock();
+                // _lock.EnterReadLock();
                 if (_tvals != null)
                     return _tvals.Val;
                 throw new InvalidOperationException(String.Format("{0} is unbound.", ToString()));
             }
             finally
             {
-                _lock.ExitReadLock();
+                // _lock.ExitReadLock();
             }
         }
 
@@ -364,7 +364,7 @@ namespace clojure.lang
         /// </summary>
         internal void EnterReadLock()
         {
-            _lock.EnterReadLock();
+            // _lock.EnterReadLock();
         }
 
         /// <summary>
@@ -372,7 +372,7 @@ namespace clojure.lang
         /// </summary>
         internal void ExitReadLock()
         {
-            _lock.ExitReadLock();
+            // _lock.ExitReadLock();
         }
 
         /// <summary>
@@ -380,7 +380,7 @@ namespace clojure.lang
         /// </summary>
         internal void EnterWriteLock()
         {
-            _lock.EnterWriteLock();
+            // _lock.EnterWriteLock();
         }
 
 
@@ -389,7 +389,7 @@ namespace clojure.lang
         /// </summary>
         internal bool TryEnterWriteLock(int msecTimeout)
         {
-            return _lock.TryEnterWriteLock(msecTimeout);
+            return true; // _lock.TryEnterWriteLock(msecTimeout);
         }
 
         /// <summary>
@@ -397,7 +397,7 @@ namespace clojure.lang
         /// </summary>
         internal void ExitWriteLock()
         {
-            _lock.ExitWriteLock();
+            // _lock.ExitWriteLock();
         }
 
         /// <summary>
@@ -744,8 +744,8 @@ namespace clojure.lang
             {
                 if (disposing)
                 {
-                    if ( _lock != null )
-                        _lock.Dispose();
+                    // if ( _lock != null )
+                    //     _lock.Dispose();
                 }
 
                 _disposed = true;
