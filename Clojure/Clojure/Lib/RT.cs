@@ -3452,8 +3452,8 @@ namespace clojure.lang
 
         static IEnumerable<string> GetFindFilePathsRaw()
         {
-            yield return System.AppDomain.CurrentDomain.BaseDirectory;
-            yield return Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "bin");
+            yield return System.Environment.CurrentDirectory;
+            yield return Path.Combine(System.Environment.CurrentDirectory, "bin");
             yield return Directory.GetCurrentDirectory();
             yield return Path.GetDirectoryName(typeof(RT).Assembly.Location);
 
