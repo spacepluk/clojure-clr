@@ -152,7 +152,7 @@ namespace clojure.lang.CljCompiler.Ast
             }
             // Type superClass = typeof(Object);
             // here begins the jank
-            System.Type superClass = Type.GetType("UnityEngine.Component, UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
+            System.Type superClass = Type.GetType("UnityEngine.MonoBehaviour, UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
 
 
             Dictionary<IPersistentVector, List<MethodInfo>> overrideables;
