@@ -59,6 +59,7 @@ namespace clojure.lang
         public static readonly Symbol MonitorExitSym = Symbol.intern("monitor-exit");
         public static readonly Symbol ImportSym = Symbol.intern("clojure.core","import*");
         public static readonly Symbol DeftypeSym = Symbol.intern("deftype*");
+        public static readonly Symbol OtherDeftypeSym = Symbol.intern("other-deftype*");
         public static readonly Symbol CaseSym = Symbol.intern("case*");
         public static readonly Symbol NewSym = Symbol.intern("new");
         public static readonly Symbol ThisSym = Symbol.intern("this");
@@ -213,6 +214,7 @@ namespace clojure.lang
             DotSym, new HostExpr.Parser(),
             AssignSym, new AssignExpr.Parser(),
             DeftypeSym, new NewInstanceExpr.DefTypeParser(),
+            //OtherDeftypeSym, new OtherNewInstanceExpr.OtherDefTypeParser(),
             ReifySym, new NewInstanceExpr.ReifyParser(),
             TrySym, new TryExpr.Parser(),
             ThrowSym, new ThrowExpr.Parser(),
@@ -1617,7 +1619,8 @@ namespace clojure.lang
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "load")]
         public static object loadFile(string fileName)
-        {            FileInfo finfo = new FileInfo(fileName);
+        {
+            FileInfo finfo = new FileInfo(fileName);
             if (!finfo.Exists)
                 throw new FileNotFoundException("Cannot find file to load", fileName);
 
