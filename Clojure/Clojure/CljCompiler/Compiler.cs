@@ -252,7 +252,7 @@ namespace clojure.lang
             DotSym, new HostExpr.Parser(),
             AssignSym, new AssignExpr.Parser(),
             DeftypeSym, new NewInstanceExpr.DefTypeParser(),
-            //OtherDeftypeSym, new OtherNewInstanceExpr.OtherDefTypeParser(),
+            OtherDeftypeSym, new OtherNewInstanceExpr.OtherDefTypeParser(),
             ReifySym, new NewInstanceExpr.ReifyParser(),
             TrySym, new TryExpr.Parser(),
             ThrowSym, new ThrowExpr.Parser(),
