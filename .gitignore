@@ -172,3 +172,4 @@ lib/
 
 # Mono
 *.userprefs
+/dist/
