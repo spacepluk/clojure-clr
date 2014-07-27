@@ -151,6 +151,9 @@ namespace clojure.lang.CljCompiler.Ast
                 interfaces = interfaces.cons(t);
             }
             Type superClass = typeof(Object);
+            //here begins the jank
+            //System.Type superClass = Type.GetType("UnityEngine.Component, UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
+
 
             Dictionary<IPersistentVector, List<MethodInfo>> overrideables;
             GatherMethods(superClass, RT.seq(interfaces), out overrideables);
