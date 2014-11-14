@@ -87,13 +87,12 @@ namespace clojure.lang
                     return new ArraySeq_uint(null, (uint[])aa, 0);
                 case TypeCode.UInt64:
                     return new ArraySeq_ulong(null, (ulong[])aa, 0);
-                case TypeCode.Object:
-                    return new ArraySeq_object(null, (object[])aa, 0);
                 default:
                     {
-                        Object[] objArray = new Object[aa.Length];
-                        Array.Copy(aa, objArray, aa.Length);
-                        return new ArraySeq_object(null, objArray, 0);
+                        Type[] elementTypes = { elementType };
+                        Type arraySeqType = typeof(TypedArraySeq<>).MakeGenericType(elementTypes);
+                        object[] ctorParams = { PersistentArrayMap.EMPTY, array, 0 };
+                        return (IArraySeq)Activator.CreateInstance(arraySeqType, ctorParams);
                     }
             }
         }
@@ -232,7 +231,7 @@ namespace clojure.lang
     #endregion
 
     [Serializable]
-    public abstract class TypedArraySeq<T> : ASeq, IArraySeq
+    public class TypedArraySeq<T> : ASeq, IArraySeq
     {
         #region Data
 
@@ -244,7 +243,7 @@ namespace clojure.lang
 
         #region C-tors
 
-        protected TypedArraySeq(IPersistentMap meta, T[] array, int index)
+        public TypedArraySeq(IPersistentMap meta, T[] array, int index)
             : base(meta)
         {
             _array = array;
@@ -254,11 +253,19 @@ namespace clojure.lang
 
         #endregion
 
-        #region Abstract methods
+        #region Virtual methods
 
-        protected abstract T ConvertNum(object x);
-        protected abstract ISeq NextOne();
-        protected abstract IObj DuplicateWithMeta(IPersistentMap meta);
+        protected virtual T ConvertNum(object x) {
+            return (T)x;
+        }
+        
+        protected virtual ISeq NextOne() {
+            return new TypedArraySeq<T>(_meta, _array, _i + 1);
+        }
+        
+        protected virtual IObj DuplicateWithMeta(IPersistentMap meta) {
+            return new TypedArraySeq<T>(meta, _array, _i);
+        }
 
         // TODO: first/reduce do a Numbers.num(x) conversion  -- do we need that?
 
