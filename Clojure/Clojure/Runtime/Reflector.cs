@@ -203,6 +203,8 @@ namespace clojure.lang
                 infos = GetInterfaceMethods(targetType, methodName, typeArgs, arity);
             else
             {
+                MethodInfo[] all = targetType.GetMethods();
+                MethodInfo[] allFlag = targetType.GetMethods(flags);
                 IEnumerable<MethodInfo> einfos
                     = targetType.GetMethods(flags).Where(info => info.Name == methodName && info.GetParameters().Length == arity);
                 infos = new List<MethodBase>();
@@ -391,7 +393,7 @@ namespace clojure.lang
                 Expr e = ha.ArgExpr;
                 if (i > 0)
                     sb.Append(", ");
-                sb.Append(e.HasClrType ? e.ClrType.FullName : "unknown");
+                sb.Append(e.HasClrType ? (e.ClrType != null ? e.ClrType.FullName : "nil") : "unknown");
                 i++;
             }
             return sb.ToString();
