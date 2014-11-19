@@ -1927,8 +1927,8 @@ namespace clojure.lang
         {
             #region Data
             
-            string FileSource { get; set; }
-            int Line { get; set; }
+            public string FileSource { get; set; }
+            public int Line { get; set; }
             
             #endregion
 
