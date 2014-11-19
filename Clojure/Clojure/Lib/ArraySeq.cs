@@ -255,7 +255,7 @@ namespace clojure.lang
 
         #region Virtual methods
 
-        protected virtual T ConvertNum(object x) {
+        protected virtual T Convert(object x) {
             return (T)x;
         }
         
@@ -352,13 +352,10 @@ namespace clojure.lang
 
         public override int IndexOf(object value)
         {
-            if (Util.IsNumeric(value))
-            {
-                T v = ConvertNum(value);
-                for (int j = _i; j < _array.Length; j++)
-                    if (v.Equals(_array[j]))
-                        return j - _i;
-            }
+            T v = Convert(value);
+            for (int j = _i; j < _array.Length; j++)
+                if (v.Equals(_array[j]))
+                    return j - _i;
 
             return -1;
         }
@@ -402,7 +399,7 @@ namespace clojure.lang
         {
         }
 
-        protected override byte ConvertNum(object x)
+        protected override byte Convert(object x)
         {
             return Util.ConvertToByte(x);
         }
@@ -431,7 +428,7 @@ namespace clojure.lang
         {
         }
 
-        protected override sbyte ConvertNum(object x)
+        protected override sbyte Convert(object x)
         {
             return Util.ConvertToSByte(x);
         }
@@ -458,7 +455,7 @@ namespace clojure.lang
         {
         }
 
-        protected override short ConvertNum(object x)
+        protected override short Convert(object x)
         {
             return Util.ConvertToShort(x);
         }
@@ -486,7 +483,7 @@ namespace clojure.lang
         {
         }
 
-        protected override ushort ConvertNum(object x)
+        protected override ushort Convert(object x)
         {
             return Util.ConvertToUShort(x);
         }
@@ -513,7 +510,7 @@ namespace clojure.lang
         {
         }
 
-        protected override int ConvertNum(object x)
+        protected override int Convert(object x)
         {
             return Util.ConvertToInt(x);
         }
@@ -541,7 +538,7 @@ namespace clojure.lang
         {
         }
 
-        protected override uint ConvertNum(object x)
+        protected override uint Convert(object x)
         {
             return Util.ConvertToUInt(x);
         }
@@ -568,7 +565,7 @@ namespace clojure.lang
         {
         }
 
-        protected override long ConvertNum(object x)
+        protected override long Convert(object x)
         {
             return Util.ConvertToLong(x);
         }
@@ -596,7 +593,7 @@ namespace clojure.lang
         {
         }
 
-        protected override ulong ConvertNum(object x)
+        protected override ulong Convert(object x)
         {
             return Util.ConvertToULong(x);
         }
@@ -623,7 +620,7 @@ namespace clojure.lang
         {
         }
 
-        protected override float ConvertNum(object x)
+        protected override float Convert(object x)
         {
             return Util.ConvertToFloat(x);
         }
@@ -650,7 +647,7 @@ namespace clojure.lang
         {
         }
 
-        protected override double ConvertNum(object x)
+        protected override double Convert(object x)
         {
             return Util.ConvertToDouble(x);
         }
@@ -677,7 +674,7 @@ namespace clojure.lang
         {
         }
 
-        protected override char ConvertNum(object x)
+        protected override char Convert(object x)
         {
             return Util.ConvertToChar(x);
         }
@@ -704,7 +701,7 @@ namespace clojure.lang
         {
         }
 
-        protected override bool ConvertNum(object x)
+        protected override bool Convert(object x)
         {
             return RT.booleanCast(x);
         }
@@ -731,7 +728,7 @@ namespace clojure.lang
         {
         }
 
-        protected override decimal ConvertNum(object x)
+        protected override decimal Convert(object x)
         {
             return Util.ConvertToDecimal(x);
         }
@@ -758,7 +755,7 @@ namespace clojure.lang
         {
         }
 
-        protected override object ConvertNum(object x)
+        protected override object Convert(object x)
         {
             return x;
         }
