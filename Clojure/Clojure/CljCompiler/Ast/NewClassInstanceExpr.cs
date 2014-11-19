@@ -176,7 +176,8 @@ namespace clojure.lang.CljCompiler.Ast
 
 
             Dictionary<IPersistentVector, List<MethodInfo>> overrideables;
-            GatherMethods(superClass, RT.seq(interfaces), out overrideables);
+            Dictionary<IPersistentVector, List<MethodInfo>> explicits;
+            GatherMethods(superClass, RT.seq(interfaces), out overrideables, out explicits);
 
             ret._methodMap = overrideables;
 
@@ -229,7 +230,7 @@ namespace clojure.lang.CljCompiler.Ast
                 IPersistentCollection methods = null;
                 for (ISeq s = methodForms; s != null; s = RT.next(s))
                 {
-                    NewInstanceMethod m = NewInstanceMethod.Parse(ret, (ISeq)RT.first(s), thisTag, overrideables);
+                    NewInstanceMethod m = NewInstanceMethod.Parse(ret, (ISeq)RT.first(s), thisTag, overrideables, explicits);
                     methods = RT.conj(methods, m);
                 }
 
@@ -294,14 +295,17 @@ namespace clojure.lang.CljCompiler.Ast
         static void GatherMethods(
             Type st,
             ISeq interfaces,
-            out Dictionary<IPersistentVector, List<MethodInfo>> overrides)
+            out Dictionary<IPersistentVector, List<MethodInfo>> overrides,
+            out Dictionary<IPersistentVector, List<MethodInfo>> explicits)
         {
-            Dictionary<IPersistentVector, List<MethodInfo>> allm = new Dictionary<IPersistentVector, List<MethodInfo>>();
-            GatherMethods(st, allm);
-            for (; interfaces != null; interfaces = interfaces.next())
-                GatherMethods((Type)interfaces.first(), allm);
+            overrides = new Dictionary<IPersistentVector, List<MethodInfo>>();
+            explicits = new Dictionary<IPersistentVector, List<MethodInfo>>();
 
-            overrides = allm;
+            GatherMethods(st, overrides);
+            for (; interfaces != null; interfaces = interfaces.next()) {
+                GatherMethods((Type)interfaces.first(), overrides);
+                GatherInterfaceExplicits((Type)interfaces.first(),explicits);
+            }
         }
 
         static void GatherMethods(Type t, Dictionary<IPersistentVector, List<MethodInfo>> mm)
@@ -340,6 +344,22 @@ namespace clojure.lang.CljCompiler.Ast
             }
             value.Add(m);
         }
+        
+        private static void GatherInterfaceExplicits(Type type, Dictionary<IPersistentVector, List<MethodInfo>> explicits)
+        {
+            foreach (MethodInfo m in type.GetMethods(BindingFlags.FlattenHierarchy | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                List<MethodInfo> value;
+                IPersistentVector mk = MSig(m);
+                if ( ! explicits.TryGetValue(mk,out value) )
+                {
+                    value = new List<MethodInfo>();
+                    explicits[mk] = value;
+                }
+                if (!value.Contains(m))
+                    value.Add(m);
+            }
+         }
 
         #endregion
 
