@@ -507,7 +507,7 @@ namespace clojure.lang.CljCompiler.Ast
                         attributes |= FieldAttributes.InitOnly;
                 }
 
-                Type type = lb.PrimitiveType ?? typeof(object);
+                Type type = lb.HasClrType ? lb.ClrType : (lb.PrimitiveType ?? typeof(object));
 
                 FieldBuilder fb = markVolatile
                     ? tb.DefineField(lb.Name, type, new Type[] { typeof(IsVolatile) }, Type.EmptyTypes, attributes)
