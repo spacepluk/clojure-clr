@@ -438,6 +438,12 @@ namespace clojure.lang.CljCompiler.Ast
             }
         }
 
+        protected override ConstructorBuilder EmitConstructor(TypeBuilder fnTB, Type baseType)
+        {
+            EmitClosedOverFields(fnTB);
+            return base.EmitConstructor(fnTB, baseType);
+        }
+        
         protected override void EmitMethods(TypeBuilder tb)
         {
             HashSet<MethodInfo> implemented = new HashSet<MethodInfo>();

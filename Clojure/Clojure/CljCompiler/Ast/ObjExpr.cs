@@ -534,7 +534,7 @@ namespace clojure.lang.CljCompiler.Ast
             }
         }
 
-        private ConstructorBuilder EmitConstructor(TypeBuilder fnTB, Type baseType)
+        protected virtual ConstructorBuilder EmitConstructor(TypeBuilder fnTB, Type baseType)
         {
             ConstructorBuilder cb = fnTB.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, CtorTypes());
             CljILGen gen = new CljILGen(cb.GetILGenerator());
