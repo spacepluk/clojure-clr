@@ -125,6 +125,8 @@ namespace clojure.lang
         internal static readonly Var CompileFilesVar = Var.intern(Namespace.findOrCreate(Symbol.intern("clojure.core")),
                                                          Symbol.intern("*compile-files*"), false).setDynamic();  
 
+        internal static readonly Var DebugVar = Var.intern(Namespace.findOrCreate(Symbol.intern("clojure.core")),
+                                                         Symbol.intern("*debug*"), false).setDynamic();
 
         internal static readonly Var InstanceVar = Var.intern(Namespace.findOrCreate(Symbol.intern("clojure.core")),
                                                          Symbol.intern("instance?"), false).setDynamic();  

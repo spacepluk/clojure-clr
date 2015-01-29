@@ -111,13 +111,8 @@ namespace clojure.lang.CljCompiler.Ast
 
         private GenContext(string directory, AssemblyName aname, string extension, bool createDynInitHelper, string sourceName)
         {
-            // TODO: Make this settable from a *debug* flag
-#if DEBUG
-            _isDebuggable = true;
-#else
-            _isDebuggable = false;
-#endif
-
+            _isDebuggable = (bool)Compiler.DebugVar.deref();
+            
             _assyGen = new AssemblyGen(aname, directory, extension, _isDebuggable);
             if ( createDynInitHelper )
                 _dynInitHelper = new DynInitHelper(_assyGen, GenerateName());
