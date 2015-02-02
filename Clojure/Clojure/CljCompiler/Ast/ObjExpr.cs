@@ -437,6 +437,9 @@ namespace clojure.lang.CljCompiler.Ast
         private void EmitStaticConstructorBody(CljILGen ilg)
         {
             GenContext.EmitDebugInfo(ilg, SpanMap);
+            
+            if(IsDefType)
+                EmitRequireNamespace(ilg);
 
             if (Constants.count() > 0)
                 EmitConstantFieldInits(ilg);
@@ -445,6 +448,21 @@ namespace clojure.lang.CljCompiler.Ast
                 EmitKeywordCallsiteInits(ilg);
 
             ilg.Emit(OpCodes.Ret);
+        }
+        
+        private void EmitRequireNamespace(CljILGen ilg)
+        {
+            if(((Namespace)RT.CurrentNSVar.deref()).Name.ToString() != "clojure.core")
+            {
+                EmitValue(RT.RequireVar, ilg);
+                ilg.Emit(OpCodes.Call, Compiler.Method_Var_getRawRoot);
+                ilg.Emit(OpCodes.Castclass, typeof(IFn));
+                ilg.EmitNull();
+                ilg.EmitString(((Namespace)RT.CurrentNSVar.deref()).Name.Name);
+                ilg.EmitCall(Compiler.Method_Symbol_intern2);
+                ilg.Emit(OpCodes.Callvirt, Compiler.Methods_IFn_invoke[1]);
+                ilg.Emit(OpCodes.Pop);
+            }
         }
 
         private void EmitKeywordCallsiteInits(CljILGen ilg)

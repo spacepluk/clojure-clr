@@ -416,6 +416,9 @@ namespace clojure.lang
         #endregion
 
         #region Vars (miscellaneous)
+        
+        public static readonly Var RequireVar
+            = Var.intern(ClojureNamespace, Symbol.intern("require"));
 
         public static readonly Var AllowUnresolvedVarsVar
             //= Var.intern(CLOJURE_NS, Symbol.intern("*allow-unresolved-vars*"), RT.F);
