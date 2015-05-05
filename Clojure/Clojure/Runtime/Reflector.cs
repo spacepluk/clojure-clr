@@ -177,6 +177,13 @@ namespace clojure.lang
                 method = GetMatchingMethodAux(targetType, args, methods, methodName, false);
                 hasMethods = methods.Count > 0;
             }
+            else
+            {
+                Type targetType = typeof(object);
+                IList<MethodBase> methods = GetMethods(targetType, methodName, typeArgs, args.Count, false);
+                method = GetMatchingMethodAux(targetType, args, methods, methodName, false);
+                hasMethods = methods.Count > 0;
+            }
 
             MaybeReflectionWarn(spanMap, (target.HasClrType ? target.ClrType : null), false, hasMethods, method, methodName, args);
             return (MethodInfo)method;
@@ -287,7 +294,7 @@ namespace clojure.lang
             foreach (HostArg ha in args)
             {
                 Expr e = ha.ArgExpr;
-                Type argType = e.HasClrType ? (e.ClrType ?? typeof(object)) : typeof(Object);
+                Type argType = e.HasClrType ? (e.ClrType ?? typeof(object)) : typeof(object);
 
                 Type t;
 

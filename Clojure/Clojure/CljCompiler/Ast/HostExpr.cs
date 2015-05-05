@@ -94,17 +94,23 @@ namespace clojure.lang.CljCompiler.Ast
                             return new StaticMethodExpr(source, spanMap, tag, t, fieldName, null, new List<HostArg>());
                         throw new MissingMemberException(t.Name, fieldName);
                     }
-                    else if (instance != null && instance.HasClrType && instance.ClrType != null)
+                    else if (instance != null)
                     {
-                        Type instanceType = instance.ClrType;
-                        if ((finfo = Reflector.GetField(instanceType, fieldName, false)) != null)
+                        Type instanceType = (instance.HasClrType && instance.ClrType != null) ? instance.ClrType : typeof(object);
+                        
+                        if ((finfo = Reflector.GetField(instanceType, fieldName, false)) != null) {
                             return new InstanceFieldExpr(source, spanMap, tag, instance, fieldName, finfo);
-                        if ((pinfo = Reflector.GetProperty(instanceType, fieldName, false)) != null)
+                        }
+                        if ((pinfo = Reflector.GetProperty(instanceType, fieldName, false)) != null) {
                             return new InstancePropertyExpr(source, spanMap, tag, instance, fieldName, pinfo);
-                        if (!isPropName && Reflector.GetArityZeroMethod(instanceType, fieldName, false) != null)
+                        }
+                        if (!isPropName && Reflector.GetArityZeroMethod(instanceType, fieldName, false) != null)  {
                             return new InstanceMethodExpr(source, spanMap, tag, instance, fieldName, null, new List<HostArg>());
-                        if (pcon.IsAssignContext)
+                        }
+                        if (pcon.IsAssignContext) {
+                            // Console.WriteLine("D");
                             return new InstanceFieldExpr(source, spanMap, tag, instance, fieldName, null); // same as InstancePropertyExpr when last arg is null
+                        }
                         else
                             return new InstanceZeroArityCallExpr(source, spanMap, tag, instance, fieldName);
                     }
