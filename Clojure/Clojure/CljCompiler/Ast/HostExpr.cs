@@ -29,6 +29,8 @@ namespace clojure.lang.CljCompiler.Ast
         #endregion
 
         #region Parsing
+        
+        public ParserContext ParsedContext { get; set; }
 
         public sealed class Parser : IParser
         {
