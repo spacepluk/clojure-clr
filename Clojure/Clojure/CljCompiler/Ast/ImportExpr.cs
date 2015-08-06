@@ -19,6 +19,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class ImportExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly string _c;

@@ -20,6 +20,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     sealed class InstanceOfExpr : Expr, MaybePrimitiveExpr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly Expr _expr;

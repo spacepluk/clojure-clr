@@ -18,6 +18,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class AssignExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly AssignableExpr _target;

@@ -29,6 +29,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class NewExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly List<HostArg> _args;

@@ -19,6 +19,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class TryExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Nested classes
 
         public sealed class CatchClause

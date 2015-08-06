@@ -19,6 +19,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class IfExpr : Expr, MaybePrimitiveExpr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly IPersistentMap _sourceSpan;

@@ -21,6 +21,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class CaseExpr : Expr, MaybePrimitiveExpr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly LocalBindingExpr _expr;

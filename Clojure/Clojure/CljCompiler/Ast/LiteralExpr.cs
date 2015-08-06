@@ -19,6 +19,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     abstract class LiteralExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         public abstract object Val { get; }
 
         #region Expr Members

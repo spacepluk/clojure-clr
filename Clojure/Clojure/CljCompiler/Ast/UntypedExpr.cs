@@ -19,6 +19,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     abstract class UntypedExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Expr Members
         
         public bool HasClrType

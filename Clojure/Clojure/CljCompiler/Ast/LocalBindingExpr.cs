@@ -19,6 +19,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class LocalBindingExpr : Expr, MaybePrimitiveExpr, AssignableExpr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly LocalBinding _b;

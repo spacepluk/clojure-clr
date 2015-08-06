@@ -19,6 +19,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     sealed class KeywordInvokeExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly KeywordExpr _kw;

@@ -42,6 +42,26 @@ namespace clojure.lang.CljCompiler.Ast
         {
             get { return _rhc == RHC.Return; }
         }
+        
+        public bool IsStatementContext
+        {
+            get { return _rhc == RHC.Statement; }
+        }
+        
+        public bool IsExpressionContext
+        {
+            get { return _rhc == RHC.Expression; }
+        }
+        
+        public bool IsReturnContext
+        {
+            get { return _rhc == RHC.Return; }
+        }
+        
+        public bool IsEvalContext
+        {
+            get { return _rhc == RHC.Eval; }
+        }
 
         readonly bool _isAssignContext;
 

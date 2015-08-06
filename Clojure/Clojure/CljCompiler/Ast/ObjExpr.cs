@@ -26,6 +26,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     public class ObjExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         const string ConstPrefix = "const__";

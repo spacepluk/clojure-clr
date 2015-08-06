@@ -19,6 +19,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     sealed class MethodParamExpr : Expr, MaybePrimitiveExpr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly Type _t;

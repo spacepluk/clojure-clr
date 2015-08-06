@@ -18,6 +18,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class BodyExpr : Expr, MaybePrimitiveExpr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly IPersistentVector _exprs;

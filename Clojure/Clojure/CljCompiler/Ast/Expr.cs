@@ -24,6 +24,7 @@ namespace clojure.lang.CljCompiler.Ast
 
         object Eval();
         void Emit(RHC rhc, ObjExpr objx, CljILGen ilg);
+        ParserContext ParsedContext { get; set; }
 
         bool HasNormalExit();
     }

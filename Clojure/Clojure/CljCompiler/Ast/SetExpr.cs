@@ -19,6 +19,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class SetExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly IPersistentVector _keys;

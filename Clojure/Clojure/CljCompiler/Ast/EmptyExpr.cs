@@ -20,6 +20,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class EmptyExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly object _coll;

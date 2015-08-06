@@ -20,6 +20,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class LetExpr : Expr, MaybePrimitiveExpr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly IPersistentVector _bindingInits;

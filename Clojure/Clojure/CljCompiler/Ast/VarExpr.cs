@@ -20,6 +20,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class VarExpr : Expr, AssignableExpr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly Var _var;

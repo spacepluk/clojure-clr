@@ -21,6 +21,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class InvokeExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly Expr _fexpr;

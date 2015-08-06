@@ -20,6 +20,8 @@ namespace clojure.lang.CljCompiler.Ast
 {
     class MetaExpr : Expr
     {
+        public ParserContext ParsedContext { get; set; }
+        
         #region Data
 
         readonly Expr _expr;
