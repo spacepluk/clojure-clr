@@ -1757,6 +1757,7 @@ namespace clojure.lang
         {
             try
             {
+                Expr retExpr = null;
                 if (form is LazySeq)
                 {
                     form = RT.seq(form);
@@ -1764,36 +1765,45 @@ namespace clojure.lang
                         form = PersistentList.EMPTY;
                 }
                 if (form == null)
-                    return NilExprInstance;
+                    retExpr = NilExprInstance;
                 else if (form is Boolean)
-                    return ((bool)form) ? TrueExprInstance : FalseExprInstance;
+                    retExpr = ((bool)form) ? TrueExprInstance : FalseExprInstance;
+                    
+                if(retExpr != null) {
+                    retExpr.ParsedContext = pcontext;
+                    return retExpr;
+                }
 
                 Type type = form.GetType();
 
                 if (type == typeof(Symbol))
-                    return AnalyzeSymbol((Symbol)form);
+                    retExpr = AnalyzeSymbol((Symbol)form);
                 else if (type == typeof(Keyword))
-                    return RegisterKeyword((Keyword)form);
+                    retExpr = RegisterKeyword((Keyword)form);
                 else if (Util.IsNumeric(form))
-                    return NumberExpr.Parse(form);
+                    retExpr = NumberExpr.Parse(form);
                 else if (type == typeof(String))
-                    return new StringExpr(String.Intern((String)form));
+                    retExpr = new StringExpr(String.Intern((String)form));
                 else if (form is IPersistentCollection && ((IPersistentCollection)form).count() == 0)
-                    return OptionallyGenerateMetaInit(pcontext, form, new EmptyExpr(form));
+                    retExpr = OptionallyGenerateMetaInit(pcontext, form, new EmptyExpr(form));
                 else if (form is ISeq)
-                    return AnalyzeSeq(pcontext, (ISeq)form, name);
+                    retExpr = AnalyzeSeq(pcontext, (ISeq)form, name);
                 else if (form is IPersistentVector)
-                    return VectorExpr.Parse(pcontext, (IPersistentVector)form);
+                    retExpr = VectorExpr.Parse(pcontext, (IPersistentVector)form);
                 else if (form is IRecord)
-                    return new ConstantExpr(form);
+                    retExpr = new ConstantExpr(form);
                 else if (form is IType)
-                    return new ConstantExpr(form);
+                    retExpr = new ConstantExpr(form);
                 else if (form is IPersistentMap)
-                    return MapExpr.Parse(pcontext, (IPersistentMap)form);
+                    retExpr = MapExpr.Parse(pcontext, (IPersistentMap)form);
                 else if (form is IPersistentSet)
-                    return SetExpr.Parse(pcontext, (IPersistentSet)form);
+                    retExpr = SetExpr.Parse(pcontext, (IPersistentSet)form);
                 else
-                    return new ConstantExpr(form);
+                    retExpr = new ConstantExpr(form);
+                
+                retExpr.ParsedContext = pcontext;
+                return retExpr;
+                
             }
             catch (CompilerException)
             {
