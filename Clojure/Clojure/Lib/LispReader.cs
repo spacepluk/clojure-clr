@@ -529,25 +529,12 @@ namespace clojure.lang
                         return null;
                 }
 
-                bool isKeyword = mask[0] == ':';
-
-                if (isKeyword)
-                {
-                    Match m2 = symbolPat.Match(mask.Substring(1));
-                    if (!m2.Success)
-                        return null;
-                    string ns;
-                    string name;
-                    ExtractNamesUsingMask(token.Substring(1), m2.Groups[1].Value, m2.Groups[2].Value, out ns, out name);
-                    return Keyword.intern(ns, name); 
-                }
-                else
-                {
-                    string ns;
-                    string name;
-                    ExtractNamesUsingMask(token, maskNS, maskName, out ns, out name);
-                    return Symbol.intern(ns, name);
-                }
+                bool isKeyword = token[0] == ':';
+                
+                Symbol sym = Symbol.intern(token.Substring(isKeyword ? 1 : 0));
+                if(isKeyword)
+                    return Keyword.intern(sym);
+                return sym;
             }
 
             return null;
