@@ -1642,9 +1642,26 @@ namespace clojure.lang
                 if (initType != null)
                     break;
             }
-            if (initType == null)
-                return false;
-
+          // Slow lookup due to possible mono bug -nasser
+          if (initType == null)
+          {
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+              if (initType == null)
+              {
+                foreach (var t in asm.GetTypes())
+                {
+                  if (t.Name == initClassName)
+                  {
+                    initType = t;
+                    break;
+                  }
+                }
+              } else {
+                break;
+              }
+            }
+          }
             InvokeInitType(initType.Assembly, initType);
             return true;
         }
