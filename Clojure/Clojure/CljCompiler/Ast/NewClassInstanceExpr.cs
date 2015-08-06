@@ -19,6 +19,14 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Microsoft.Scripting.Generation;
 
+namespace clojure.lang
+{
+    public interface IStaticConstructor
+    {
+        void CarlylesMouse();
+    }
+}
+
 namespace clojure.lang.CljCompiler.Ast
 {
     // Copied and modified from NewInstanceExpr to support the defclass* special form
@@ -263,6 +271,20 @@ namespace clojure.lang.CljCompiler.Ast
             return ret;
         }
 
+        protected override void DefineStaticConstructor(TypeBuilder fnTB)
+        {
+            MethodBuilder mb = fnTB.DefineMethod(
+                "IStaticConstructor.CarlylesMouse",
+                MethodAttributes.ReuseSlot | MethodAttributes.Public | MethodAttributes.Virtual,
+                typeof(void),
+                Type.EmptyTypes);
+            fnTB.DefineMethodOverride(mb, typeof(IStaticConstructor).GetMethod("CarlylesMouse"));
+            fnTB.AddInterfaceImplementation(typeof(IStaticConstructor));
+            CljILGen ilg = new CljILGen(mb.GetILGenerator());
+            EmitRequireNamespace(ilg);
+            EmitStaticConstructorBody(ilg);
+        }
+        
         private static Type[] SeqToTypeArray(IPersistentVector interfaces)
         {
             Type[] types = new Type[interfaces.count()];

@@ -429,20 +429,17 @@ namespace clojure.lang.CljCompiler.Ast
             }
         }
 
-        private void DefineStaticConstructor(TypeBuilder fnTB)
+        protected virtual void DefineStaticConstructor(TypeBuilder fnTB)
         {
             ConstructorBuilder cb = fnTB.DefineConstructor(MethodAttributes.Static, CallingConventions.Standard, Type.EmptyTypes);
             EmitStaticConstructorBody(new CljILGen(cb.GetILGenerator()));
 
         }
-
-        private void EmitStaticConstructorBody(CljILGen ilg)
+        
+        protected void EmitStaticConstructorBody(CljILGen ilg)
         {
             GenContext.EmitDebugInfo(ilg, SpanMap);
             
-            if(IsDefType)
-                EmitRequireNamespace(ilg);
-
             if (Constants.count() > 0)
                 EmitConstantFieldInits(ilg);
 
@@ -452,7 +449,7 @@ namespace clojure.lang.CljCompiler.Ast
             ilg.Emit(OpCodes.Ret);
         }
         
-        private void EmitRequireNamespace(CljILGen ilg)
+        protected void EmitRequireNamespace(CljILGen ilg)
         {
             if(((Namespace)RT.CurrentNSVar.deref()).Name.ToString() != "clojure.core")
             {
