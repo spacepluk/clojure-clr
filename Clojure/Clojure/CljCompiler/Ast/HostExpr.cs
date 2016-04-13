@@ -98,7 +98,14 @@ namespace clojure.lang.CljCompiler.Ast
                     }
                     else if (instance != null)
                     {
-                        Type instanceType = (instance.HasClrType && instance.ClrType != null) ? instance.ClrType : typeof(object);
+                        Type instanceType;
+                        
+                        // SPOT FIX -nasser
+                        if(instance is InstanceZeroArityCallExpr) {
+                            instanceType = instance.ClrType ?? typeof(object) ;
+                        } else {
+                            instanceType = (instance.HasClrType && instance.ClrType != null) ? instance.ClrType : typeof(object);
+                        }
                         
                         if ((finfo = Reflector.GetField(instanceType, fieldName, false)) != null) {
                             return new InstanceFieldExpr(source, spanMap, tag, instance, fieldName, finfo);

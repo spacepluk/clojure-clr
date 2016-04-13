@@ -80,7 +80,12 @@ namespace clojure.lang.CljCompiler.Ast
 
         public override Type ClrType
         {
-            get { return HostExpr.TagToType(_tag); }
+            get
+            {
+                return _tag != null
+                ? HostExpr.TagToType(_tag)
+                : typeof(object);
+            }
         }
 
         #endregion
