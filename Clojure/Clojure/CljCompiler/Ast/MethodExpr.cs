@@ -175,8 +175,6 @@ namespace clojure.lang.CljCompiler.Ast
             //       emit the call (slightly different for light compile vs full)
             //
             
-            Console.WriteLine("### EmitComplexCall " + _spanMap + " " + _source + " " + _methodName);
-
             //  Build the parameter list
 
             List<ParameterExpression> paramExprs = new List<ParameterExpression>(_args.Count + 1);
