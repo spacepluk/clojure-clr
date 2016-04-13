@@ -1374,7 +1374,8 @@ namespace clojure.lang
 
         internal static string InitClassName(string sourcePath)
         {
-            return "__Init__$" + sourcePath.Replace(".", "/");
+            // munge slashes to __SLASH__ to avoid mono lookup bug -nasser
+            return "__Init__$" + sourcePath.Replace(".", "/").Replace("/", "__SLASH__");
         }
         
         public static void PushNS()
@@ -1583,20 +1584,8 @@ namespace clojure.lang
 
         private static Type GetTypeFromAssy(Assembly assy, string typeName)
         {
-            if (RT.IsRunningOnMono)
-            {
-                // I have no idea why Mono can't find our initializer types using Assembly.GetType(string).
-                // This is roll-your-own.
-                Type[] types = assy.GetExportedTypes();
-                foreach (Type t in types)
-                {
-                    if (t.Name.Equals(typeName))
-                        return t;
-                }
-                return null;
-            }
-            else
-                return assy.GetType(typeName);
+            // removing slashes in init types makes them findable on mono -nasser
+            return assy.GetType(typeName);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
@@ -1630,6 +1619,17 @@ namespace clojure.lang
         {
             var initClassName = InitClassName(relativePath);
             Type initType = null;
+            
+            // fastest, look up initClassName and assembly
+            StringBuilder assemblyQualifiedInitClassName = new StringBuilder();
+            assemblyQualifiedInitClassName.Append(initClassName);
+            assemblyQualifiedInitClassName.Append(", ");
+            assemblyQualifiedInitClassName.Append(relativePath.Replace("/", "."));
+            assemblyQualifiedInitClassName.Append(".clj");
+            initType = Type.GetType(assemblyQualifiedInitClassName.ToString());
+            
+            if(initType == null)
+            {
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
 #if CLR2
@@ -1641,6 +1641,7 @@ namespace clojure.lang
                 initType = asm.GetType(initClassName);
                 if (initType != null)
                     break;
+            }
             }
           // Slow lookup due to possible mono bug -nasser
           if (initType == null)
