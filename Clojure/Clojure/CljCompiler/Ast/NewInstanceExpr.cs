@@ -553,7 +553,7 @@ namespace clojure.lang.CljCompiler.Ast
             CljILGen gen = new CljILGen(mb.GetILGenerator());
             gen.EmitNew(typeof(NotImplementedException), Type.EmptyTypes);
             gen.Emit(OpCodes.Throw);
-            tb.DefineMethodOverride(mb, mi);
+            // tb.DefineMethodOverride(mb, mi);
         }
 
         #endregion
