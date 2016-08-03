@@ -1664,6 +1664,10 @@ namespace clojure.lang
               }
             }
           }
+          if(initType == null)
+          {
+            throw new AssemblyLoadException(String.Format("Failed loading Init Type for {0}", relativePath));
+          }
             InvokeInitType(initType.Assembly, initType);
             return true;
         }
