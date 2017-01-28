@@ -529,6 +529,17 @@
    :static true}
   [x] (not (nil? x)))
 
+(defn boolean?
+  "Return true if x is a Boolean"
+  {:added "1.9"}
+  [x] (instance? Boolean x))
+
+(defn any?
+  "Returns true given any argument."
+  {:tag Boolean
+   :added "1.9"}
+  [x] true)
+
 (defn str
   "With no args, returns the empty string. With one arg x, returns
   x.toString().  (str nil) returns the empty string. With more than
@@ -1377,6 +1388,33 @@
    :static true}
   [n] (not (even? n)))
 
+(defn int?
+  "bad version of clojure jvm int?"
+  [x] (integer? x))
+
+(defn pos-int?
+  "Return true if x is a positive fixed precision integer"
+  {:added "1.9"}
+  [x] (and (int? x)
+           (pos? x)))
+
+(defn neg-int?
+  "Return true if x is a negative fixed precision integer"
+  {:added "1.9"}
+  [x] (and (int? x)
+           (neg? x)))
+
+(defn nat-int?
+  "Return true if x is a non-negative fixed precision integer"
+  {:added "1.9"}
+  [x] (and (int? x)
+           (not (neg? x))))
+
+(defn double?
+  "Return true if x is a Double"
+  {:added "1.9"}
+  [x] (instance? Double x))
+
 
 ;;
 
@@ -1554,6 +1592,41 @@
    :static true}
   [^clojure.lang.Named x]
     (. x (getNamespace)))
+  
+(defn ident?
+  "Return true if x is a symbol or keyword"
+  {:added "1.9"}
+  [x] (or (keyword? x) (symbol? x)))
+
+(defn simple-ident?
+  "Return true if x is a symbol or keyword without a namespace"
+  {:added "1.9"}
+  [x] (and (ident? x) (nil? (namespace x))))
+
+(defn qualified-ident?
+  "Return true if x is a symbol or keyword with a namespace"
+  {:added "1.9"}
+  [x] (and (ident? x) (namespace x) true))
+
+(defn simple-symbol?
+  "Return true if x is a symbol without a namespace"
+  {:added "1.9"}
+  [x] (and (symbol? x) (nil? (namespace x))))
+
+(defn qualified-symbol?
+  "Return true if x is a symbol with a namespace"
+  {:added "1.9"}
+  [x] (and (symbol? x) (namespace x) true))
+
+(defn simple-keyword?
+  "Return true if x is a keyword without a namespace"
+  {:added "1.9"}
+  [x] (and (keyword? x) (nil? (namespace x))))
+
+(defn qualified-keyword?
+  "Return true if x is a keyword with a namespace"
+  {:added "1.9"}
+  [x] (and (keyword? x) (namespace x) true))
   
 (defmacro locking
   "Executes exprs in an implicit do, while holding the monitor of x.
@@ -6032,6 +6105,11 @@ Note that read can execute code (controlled by *read-eval*),
    :static true}
   [coll] (instance? clojure.lang.Reversible coll))
 
+(defn indexed?
+  "Return true if coll implements Indexed, indicating efficient lookup by index"
+  {:added "1.9"}
+  [coll] (instance? clojure.lang.Indexed coll))
+
 (def ^:dynamic 
  ^{:doc "bound in a repl thread to the most recent value printed"
    :added "1.0"}
@@ -6517,6 +6595,18 @@ Note that read can execute code (controlled by *read-eval*),
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; helper files ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (alter-meta! (find-ns 'clojure.core) assoc :doc "Fundamental library of the Clojure language") (load "core_clr")  ;;; Added
+
+(defn seqable? [x]
+  "Based on RT.cs, clojure.core/cast, clojure.core/instance. Uncertain whether it works in all cases"
+  (or
+    (nil? x)
+    (instance? clojure.lang.ASeq x)
+    (instance? clojure.lang.LazySeq x)
+    (instance? clojure.lang.Seqable x)
+    (array? x)
+    (string? x)
+    (instance? System.Collections.IEnumerable x)))
+
 (load "core_proxy")
 (load "core_print")
 (load "genclass")
@@ -6524,6 +6614,36 @@ Note that read can execute code (controlled by *read-eval*),
 (load "core/protocols")
 (load "gvec")
 (load "instant")
+
+(defprotocol Inst
+  (inst-ms* [inst]))
+
+(extend-protocol Inst
+  ;;java.util.Date
+  System.DateTime
+  ;;(inst-ms* [inst] (.getTime ^java.util.Date inst))
+  (inst-ms* [inst]
+    ;; from https://blogs.msdn.microsoft.com/brada/2004/03/20/seconds-since-the-unix-epoch-in-c/
+    (let [^System.TimeSpan t (System.DateTime/op_Subtraction
+                               System.DateTime/UtcNow
+                               (System.DateTime. 1970, 1, 1))]
+      (. t TotalMilliseconds))
+    ;;(.getTime ^System.DateTime inst)
+    )
+  )
+
+(defn inst-ms
+  "Return the number of milliseconds since January 1, 1970, 00:00:00 GMT"
+  {:added "1.9"}
+  [inst]
+  (inst-ms* inst))
+
+(defn inst?
+  "Return true if x satisfies Inst"
+  {:added "1.9"}
+  [x]
+  (satisfies? Inst x))
+
 (load "uuid")
 
 (defn reduce
@@ -7096,6 +7216,18 @@ clojure.lang.IKVReduce
                         (keepi (inc idx) (rest s))
                         (cons x (keepi (inc idx) (rest s)))))))))]
        (keepi 0 coll))))
+
+(defn bounded-count
+  "If coll is counted? returns its count, else will count at most the first n
+  elements of coll using its seq"
+  {:added "1.9"}
+  [n coll]
+  (if (counted? coll)
+    (count coll)
+    (loop [i 0 s (seq coll)]
+      (if (and s (< i n))
+        (recur (inc i) (next s))
+        i))))
 
 (defn every-pred
   "Takes a set of predicates and returns a function f that returns true if all of its
