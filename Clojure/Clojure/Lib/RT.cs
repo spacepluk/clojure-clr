@@ -31,6 +31,7 @@ using RTProperties = clojure.runtime.Properties;
 
 namespace clojure.lang
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling")]
     public static class RT
     {
         #region Default symbol-to-class map
@@ -395,14 +396,11 @@ namespace clojure.lang
             //= Var.intern(CLOJURE_NS, Symbol.intern("*print-dup*"), RT.F);
             = Var.intern(ClojureNamespace, Symbol.intern("*print-dup*"), false).setDynamic();
 
-        // Keep these around for debugging
-#pragma warning disable 414
         // We need this Var initializaed early on, I'm willing to waste the local init overhead to keep the code here with the others.
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1823:AvoidUnusedPrivateFields")]
         static readonly Var FlushOnNewlineVar
             //= Var.intern(CLOJURE_NS, Symbol.intern("*flush-on-newline*"), RT.T);
             = Var.intern(ClojureNamespace, Symbol.intern("*flush-on-newline*"), true).setDynamic();
-#pragma warning restore 414
 
         static readonly Var PrintInitializedVar 
             = Var.intern(ClojureNamespace, Symbol.intern("print-initialized"));
@@ -445,12 +443,16 @@ namespace clojure.lang
         public static readonly Var DataReadersVar
             = Var.intern(ClojureNamespace, Symbol.intern("*data-readers*"), RT.map()).setDynamic();
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "Fn")]
         public static readonly Var DefaultDataReaderFnVar
             = Var.intern(ClojureNamespace, Symbol.intern("*default-data-reader-fn*"), RT.map());
 
         public static readonly Var DefaultDataReadersVar
            = Var.intern(ClojureNamespace, Symbol.intern("default-data-readers"), RT.map());
-        
+
+        public static readonly Var SuppressReadVar 
+            = Var.intern(ClojureNamespace, Symbol.intern("*suppress-read*"), null).setDynamic();
+
         public static readonly Var AssertVar
             //= Var.intern(CLOJURE_NS, Symbol.intern("*assert*"), RT.T);
             = Var.intern(ClojureNamespace, Symbol.intern("*assert*"), true).setDynamic();
@@ -542,7 +544,7 @@ namespace clojure.lang
             return Assembly.Load(ReadStreamBytes(stream));
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling"), System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1810:InitializeReferenceTypeStaticFieldsInline")]
         static RT()
         {
             AppDomain.CurrentDomain.AssemblyResolve += ResolveAssembly;
@@ -626,6 +628,13 @@ namespace clojure.lang
                 in_ns.invoke(USER);
                 refer.invoke(CLOJURE);
                 MaybeLoadCljScript("user.clj");
+
+                // start socket servers
+                Var require = var("clojure.core", "require");
+                Symbol SERVER = Symbol.intern("clojure.core.server");
+                require.invoke(SERVER);
+                Var start_servers = var("clojure.core.server", "start-servers");
+                start_servers.invoke(Environment.GetEnvironmentVariables());
             }
             finally
             {
@@ -678,6 +687,51 @@ namespace clojure.lang
 
         #region Collections support
 
+        private const int CHUNK_SIZE = 32;
+        
+        // Because of the need to look before you leap (make sure one element exists)
+        // this is more complicated than the JVM version:  In JVM-land, you can hasNext before you move.
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
+        public static ISeq chunkEnumeratorSeq(IEnumerator iter)
+        {
+            if (!iter.MoveNext())
+                return null;
+
+            return PrimedChunkEnumeratorSeq(iter);
+        }
+
+        private static ISeq PrimedChunkEnumeratorSeq(IEnumerator iter)
+        {
+            return new LazySeq(new ChunkEnumeratorSeqHelper(iter));
+        }
+
+        private class ChunkEnumeratorSeqHelper : AFn
+        {
+            IEnumerator _iter;
+
+            public ChunkEnumeratorSeqHelper(IEnumerator iter)
+            {
+                _iter = iter;
+            }
+
+            // Assumes MoveNext has already been called on _iter.
+            public override object invoke()
+            {
+                object[] arr = new object[CHUNK_SIZE];
+                bool more = true;
+                int n = 0;
+                for (; n < CHUNK_SIZE && more; ++n)
+                {
+                    arr[n] = _iter.Current;
+                    more = _iter.MoveNext();
+                }
+
+                return new ChunkedCons(new ArrayChunk(arr, 0, n), more ?  PrimedChunkEnumeratorSeq(_iter) : null);
+            }
+        }
+
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
         public static ISeq seq(object coll)
         {
@@ -711,7 +765,7 @@ namespace clojure.lang
 
             IEnumerable ie = coll as IEnumerable;
             if (ie != null)  // java: Iterable  -- reordered clauses so others take precedence.
-                return EnumeratorSeq.create(ie.GetEnumerator());  // IteratorSeq
+                return chunkEnumeratorSeq(ie.GetEnumerator());            // chunkIteratorSeq
 
             // The equivalent for Java:Map is IDictionary.  IDictionary is IEnumerable, so is handled above.
             //else if(coll isntanceof Map)  
@@ -768,12 +822,18 @@ namespace clojure.lang
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
         public static ISeq keys(object coll)
         {
+            IPersistentMap ipm = coll as IPersistentMap;
+            if (ipm != null)
+                return APersistentMap.KeySeq.createFromMap(ipm);
             return APersistentMap.KeySeq.create(seq(coll));
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
         public static ISeq vals(object coll)
         {
+            IPersistentMap ipm = coll as IPersistentMap;
+            if (ipm != null)
+                return APersistentMap.ValSeq.createFromMap(ipm);
             return APersistentMap.ValSeq.create(seq(coll));
         }
 
@@ -821,6 +881,12 @@ namespace clojure.lang
             IDictionary d = o as IDictionary;
             if (d != null)
                 return d.Count;
+
+            if (o is DictionaryEntry)
+                return 2;
+
+            if (o.GetType().IsGenericType && o.GetType().Name == "KeyValuePair`2")
+                return 2;
 
             Array a = o as Array;
             if (a != null)
@@ -1070,7 +1136,7 @@ namespace clojure.lang
 
             IDictionary m = (IDictionary)coll;
             if (m.Contains(key))
-                return new MapEntry(key, m[key]);
+                return Tuple.create(key, m[key]);
 
             return null;
         }
@@ -1088,6 +1154,19 @@ namespace clojure.lang
         //    return nth(coll, (int)n);
         //}
 
+        static public bool SupportsRandomAccess(object coll)
+        {
+            return coll is Indexed ||
+                coll == null ||
+                coll is String ||
+                coll.GetType().IsArray ||
+                coll is IList ||
+                coll is DictionaryEntry ||
+                coll is IMapEntry ||
+                coll is JReMatcher ||
+                coll is Match ||
+                (coll.GetType().IsGenericType && coll.GetType().Name == "KeyValuePair`2");
+        }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
         static public Object nth(object coll, int n)
@@ -1188,6 +1267,7 @@ namespace clojure.lang
             return NthFrom(coll, n, notFound);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
         static object NthFrom(object coll, int n, object notFound)
         {
             if (coll == null)
@@ -2476,9 +2556,7 @@ namespace clojure.lang
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
         static public object seqToTypedArray(ISeq seq)
         {
-            Type type = (seq != null)
-                ? (seq.first() == null ? typeof(object) : seq.first().GetType())
-                : typeof(Object);
+            Type type = (seq != null && seq.first() != null) ? seq.first().GetType() : typeof(Object);
             return seqToTypedArray(type, seq);
         }
 
@@ -2559,8 +2637,7 @@ namespace clojure.lang
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
         public static bool suppressRead()
         {
-            // TODO: look up in suppress-read var  (java todo)
-            return false;
+            return booleanCast(SuppressReadVar.deref());
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
@@ -2576,12 +2653,18 @@ namespace clojure.lang
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
         static public Object readString(String s)
         {
+            return readString(s,null);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
+        static public Object readString(String s, Object opts)
+        {
             using (PushbackTextReader r = new PushbackTextReader(new StringReader(s)))
-                return LispReader.read(r, true, null, false);
+                return LispReader.read(r, opts);
         }
 
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity"), System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1800:DoNotCastUnnecessarily")]
         static public void print(Object x, TextWriter w)
         {
@@ -3140,7 +3223,7 @@ namespace clojure.lang
             #region core.clj compatibility
 
             //  Somewhere, there is an explicit call to compare
-            [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode"), System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic")]
             public int compare(object x, object y)
             {
                 return Util.compare(x, y);  // was ((IComparable)x).CompareTo(y);-- changed in Java rev 1145
@@ -3327,7 +3410,17 @@ namespace clojure.lang
             if (!RuntimeBootstrapFlag.DisableFileLoad)
             {
                 FileInfo cljInfo = FindFile(cljname);
+                if (cljInfo == null )
+                {
+                    cljname = relativePath + ".cljc";
+                    cljInfo = FindFile(cljname);
+                }
                 FileInfo assyInfo = FindFile(assemblyname);
+                if ( assyInfo == null )
+                {
+                    assemblyname = relativePath.Replace('/', '.') + ".cljc.dll";
+                    assyInfo = FindFile(assemblyname);
+                }
 
 
                 if ((assyInfo != null &&
@@ -3467,7 +3560,7 @@ namespace clojure.lang
             return null;
         }
 
-        static IEnumerable<string> GetFindFilePaths()
+        public static IEnumerable<string> GetFindFilePaths()
         {
             return GetFindFilePathsRaw().Distinct();
         }
@@ -3625,6 +3718,7 @@ namespace clojure.lang
         #endregion
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1726:UsePreferredTerms", MessageId = "Flag")]
     public static class RuntimeBootstrapFlag
     {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible")]

@@ -100,136 +100,6 @@ namespace clojure.lang
         #endregion
     }
 
-    #region UntypedArraySeq (deprecated)
-
-    //[Serializable]
-    //public class UntypedArraySeq : ASeq, IArraySeq
-    //{
-    //    #region Data
-
-    //    private readonly Array _a;
-    //    private readonly int _i;
-
-    //    #endregion
-
-    //    #region Ctors
-
-    //    public UntypedArraySeq(object array, int index)
-    //    {
-    //        _a = (Array)array;
-    //        _i = index;
-    //    }
-
-    //    public UntypedArraySeq(IPersistentMap meta, object array, int index)
-    //        : base(meta)
-    //    {
-    //        _a = (Array)array;
-    //        _i = index;
-    //    }
-
-    //    #endregion
-
-    //    #region ISeq members
-
-    //    public override object first()
-    //    {
-    //        return Reflector.prepRet(typeof(Object),_a.GetValue(_i));
-    //    }
-
-    //    public override ISeq next()
-    //    {
-    //        if (_i + 1 < _a.Length)
-    //            return new UntypedArraySeq(_a, _i + 1);
-    //        return null;
-    //    }
-
-    //    #endregion
-
-    //    #region IPersistentCollection members
-
-    //    public override int count()
-    //    {
-    //        return _a.Length - _i;
-    //    }
-
-    //    #endregion
-
-    //    #region IObj members
-
-    //    public override IObj withMeta(IPersistentMap meta)
-    //    {
-    //        return new UntypedArraySeq(meta, _a, _i);
-    //    }
-
-    //    #endregion
-
-    //    #region IndexedSeq Members
-
-    //    public int index()
-    //    {
-    //        return _i;
-    //    }
-
-    //    #endregion
-
-    //    #region IReduce Members
-
-    //    public object reduce(IFn f)
-    //    {
-    //        object ret = Reflector.prepRet(typeof(object),_a.GetValue(_i));
-    //        for (int x = _i + 1; x < _a.Length; x++)
-    //            ret = f.invoke(ret, Reflector.prepRet(typeof(object), _a.GetValue(x)));
-    //        return ret;
-    //    }
-
-    //    public object reduce(IFn f, object start)
-    //    {
-    //        object ret = f.invoke(start, Reflector.prepRet(typeof(object), _a.GetValue(_i)));
-    //        for (int x = _i + 1; x < _a.Length; x++)
-    //            ret = f.invoke(ret, Reflector.prepRet(typeof(object), _a.GetValue(x)));
-    //        return ret;
-    //    }
-
-    //    #endregion
-
-    //    #region IList members
-
-    //    public override int IndexOf(object value)
-    //    {
-    //        int n = _a.Length;
-    //        for (int j = _i; j < n; j++)
-    //            if (Util.equals(value, Reflector.prepRet(typeof(object), _a.GetValue(j))))
-    //                return j - _i;
-    //        return -1;
-    //    }
-
-    //    #endregion
-
-    //    #region IArraySeq members
-
-    //    public object[] ToArray()
-    //    {
-    //          object[] items = new object[_a.Length];
-    //          for (int i = 0; i < _a.Length; i++)
-    //              items[i] = _a.GetValue(i);
-    //            return items;
-    //    }
-
-    //    public object Array()
-    //    {
-    //        return _a;
-    //    }
-
-    //    public int Index()
-    //    {
-    //        return _i;
-    //    }
-
-    //    #endregion
-    //}
-
-    #endregion
-
     [Serializable]
     public class TypedArraySeq<T> : ASeq, IArraySeq
     {
@@ -255,15 +125,18 @@ namespace clojure.lang
 
         #region Virtual methods
 
-        protected virtual T Convert(object x) {
+        protected virtual T Convert(object x)
+        {
             return (T)x;
         }
-        
-        protected virtual ISeq NextOne() {
+
+        protected virtual ISeq NextOne()
+        {
             return new TypedArraySeq<T>(_meta, _array, _i + 1);
         }
-        
-        protected virtual IObj DuplicateWithMeta(IPersistentMap meta) {
+
+        protected virtual IObj DuplicateWithMeta(IPersistentMap meta)
+        {
             return new TypedArraySeq<T>(meta, _array, _i);
         }
 
@@ -324,25 +197,33 @@ namespace clojure.lang
 
         public object reduce(IFn f)
         {
-            //object ret = Reflector.prepRet(_ct,_array[_i]);
+            if (_array == null)
+                return null;
+
             object ret = _array[_i];
             for (int x = _i + 1; x < _array.Length; x++)
             {
-                //ret = f.invoke(ret, Reflector.prepRet(_ct, _array[x]));
                 ret = f.invoke(ret, _array[x]);
+                if (RT.isReduced(ret))
+                    return ((IDeref)ret).deref();
             }
             return ret;
         }
 
         public object reduce(IFn f, object start)
         {
-            //object ret = f.invoke(start, Reflector.prepRet(_ct, _array[_i]));
+            if (_array == null)
+                return null;
+
             object ret = f.invoke(start, _array[_i]);
             for (int x = _i + 1; x < _array.Length; x++)
             {
-                //ret = f.invoke(ret, Reflector.prepRet(_ct, _array[x]));
+                if (RT.isReduced(ret))
+                    return ((IDeref)ret).deref(); 
                 ret = f.invoke(ret, _array[x]);
             }
+            if (RT.isReduced(ret))
+                return ((IDeref)ret).deref(); 
             return ret;
         }
 
@@ -356,7 +237,6 @@ namespace clojure.lang
             for (int j = _i; j < _array.Length; j++)
                 if (v.Equals(_array[j]))
                     return j - _i;
-
             return -1;
         }
       
@@ -389,10 +269,32 @@ namespace clojure.lang
     }
 
     [Serializable]
+    public class NumericArraySeq<T> : TypedArraySeq<T>
+    {
+        #region Ctors
+        
+        public NumericArraySeq(IPersistentMap meta, T[] array, int index)
+                    :base(meta,array,index)
+        {
+        }
+
+        #endregion
+
+        #region overrides
+
+        public override int IndexOf(object value)
+        {
+            return Util.IsNumeric(value) ? base.IndexOf(value) : -1;
+        }
+
+        #endregion
+    }
+
+    [Serializable]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly",Justification="Compatibility with clojure.core")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class ArraySeq_byte : TypedArraySeq<byte>
+    public class ArraySeq_byte : NumericArraySeq<byte>
     {
         public ArraySeq_byte(IPersistentMap meta, byte[] array, int index)
             : base(meta,array,index)
@@ -413,6 +315,8 @@ namespace clojure.lang
         {
             return new ArraySeq_byte(meta, _array, _i);
         }
+
+
     }
 
     [Serializable]
@@ -420,7 +324,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "sbyte")]
-    public class ArraySeq_sbyte : TypedArraySeq<sbyte>
+    public class ArraySeq_sbyte : NumericArraySeq<sbyte>
     {
 
         public ArraySeq_sbyte(IPersistentMap meta, sbyte[] array, int index)
@@ -448,7 +352,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "Compatibility with clojure.core")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class ArraySeq_short : TypedArraySeq<short>
+    public class ArraySeq_short : NumericArraySeq<short>
     {
         public ArraySeq_short(IPersistentMap meta, short[] array, int index)
             : base(meta,array,index)
@@ -476,7 +380,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "ushort")]
-    public class ArraySeq_ushort : TypedArraySeq<ushort>
+    public class ArraySeq_ushort : NumericArraySeq<ushort>
     {
         public ArraySeq_ushort(IPersistentMap meta, ushort[] array, int index)
             : base(meta,array,index)
@@ -503,7 +407,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "Compatibility with clojure.core")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class ArraySeq_int : TypedArraySeq<int>
+    public class ArraySeq_int : NumericArraySeq<int>
     {
         public ArraySeq_int(IPersistentMap meta, int[] array, int index)
             : base(meta,array,index)
@@ -531,7 +435,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "uint")]
-    public class ArraySeq_uint : TypedArraySeq<uint>
+    public class ArraySeq_uint : NumericArraySeq<uint>
     {
         public ArraySeq_uint(IPersistentMap meta, uint[] array, int index)
             : base(meta,array,index)
@@ -558,7 +462,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "Compatibility with clojure.core")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class ArraySeq_long : TypedArraySeq<long>
+    public class ArraySeq_long : NumericArraySeq<long>
     {
         public ArraySeq_long(IPersistentMap meta, long[] array, int index)
             : base(meta,array,index)
@@ -586,7 +490,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "ulong")]
-    public class ArraySeq_ulong : TypedArraySeq<ulong>
+    public class ArraySeq_ulong : NumericArraySeq<ulong>
     {
         public ArraySeq_ulong(IPersistentMap meta, ulong[] array, int index)
             : base(meta,array,index)
@@ -613,7 +517,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "Compatibility with clojure.core")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class ArraySeq_float : TypedArraySeq<float>
+    public class ArraySeq_float : NumericArraySeq<float>
     {
         public ArraySeq_float(IPersistentMap meta, float[] array, int index)
             : base(meta,array,index)
@@ -640,7 +544,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "Compatibility with clojure.core")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class ArraySeq_double : TypedArraySeq<double>
+    public class ArraySeq_double : NumericArraySeq<double>
     {
         public ArraySeq_double(IPersistentMap meta, double[] array, int index)
             : base(meta,array,index)
@@ -667,7 +571,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "Compatibility with clojure.core")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class ArraySeq_char : TypedArraySeq<char>
+    public class ArraySeq_char : NumericArraySeq<char>
     {
         public ArraySeq_char(IPersistentMap meta, char[] array, int index)
             : base(meta,array,index)
@@ -694,7 +598,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "Compatibility with clojure.core")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class ArraySeq_bool : TypedArraySeq<bool>
+    public class ArraySeq_bool : NumericArraySeq<bool>
     {
         public ArraySeq_bool(IPersistentMap meta, bool[] array, int index)
             : base(meta,array,index)
@@ -721,7 +625,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "Compatibility with clojure.core")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class ArraySeq_decimal : TypedArraySeq<decimal>
+    public class ArraySeq_decimal : NumericArraySeq<decimal>
     {
         public ArraySeq_decimal(IPersistentMap meta, decimal[] array, int index)
             : base(meta, array, index)
@@ -748,7 +652,7 @@ namespace clojure.lang
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", Justification = "Compatibility with clojure.core")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1707:IdentifiersShouldNotContainUnderscores")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix")]
-    public class ArraySeq_object : TypedArraySeq<object>
+    public class ArraySeq_object : NumericArraySeq<object>
     {
         public ArraySeq_object(IPersistentMap meta, object[] array, int index)
             : base(meta, array, index)

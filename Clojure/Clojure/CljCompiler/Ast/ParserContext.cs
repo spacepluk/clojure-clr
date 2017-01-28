@@ -32,43 +32,12 @@ namespace clojure.lang.CljCompiler.Ast
         #region Data
 
         readonly RHC _rhc;
+        public RHC Rhc { get { return _rhc; } }
 
-        internal RHC Rhc
-        {
-            get { return _rhc; }
-        } 
-
-        public bool IsRecurContext
-        {
-            get { return _rhc == RHC.Return; }
-        }
-        
-        public bool IsStatementContext
-        {
-            get { return _rhc == RHC.Statement; }
-        }
-        
-        public bool IsExpressionContext
-        {
-            get { return _rhc == RHC.Expression; }
-        }
-        
-        public bool IsReturnContext
-        {
-            get { return _rhc == RHC.Return; }
-        }
-        
-        public bool IsEvalContext
-        {
-            get { return _rhc == RHC.Eval; }
-        }
+        public bool IsRecurContext { get { return _rhc == RHC.Return; } }
 
         readonly bool _isAssignContext;
-
-        public bool IsAssignContext
-        {
-            get { return _isAssignContext; }
-        } 
+        public bool IsAssignContext { get { return _isAssignContext; } }
 
         #endregion
 

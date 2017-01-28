@@ -669,6 +669,9 @@ namespace clojure.lang
         /// <returns><value>true</value> if they are identical; <value>false</value> otherwise.</returns>
         public int CompareTo(Ref other)
         {
+            if ( ReferenceEquals(other,null ) )
+                return 1;
+    
             return _id.CompareTo(other._id);
         }
 
@@ -682,7 +685,7 @@ namespace clojure.lang
                 return true;
 
             Ref r = obj as Ref;
-            if (r == null)
+            if (ReferenceEquals(r,null))
                 return false;
 
             return _id == r._id;
@@ -701,7 +704,7 @@ namespace clojure.lang
             if (ReferenceEquals(x, y))
                 return true;
 
-            if ((object)x == null)
+            if (ReferenceEquals(x,null))
                 return false;
 
             return x.CompareTo(y) == 0;
