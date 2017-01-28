@@ -129,6 +129,9 @@ namespace clojure.lang
         #region Vars
 
         //boolean
+        internal static readonly Var DebugVar = Var.intern(Namespace.findOrCreate(Symbol.intern("clojure.core")),
+                                                         Symbol.intern("*debug*"), false).setDynamic();  
+        
         internal static readonly Var CompileFilesVar = Var.intern(Namespace.findOrCreate(Symbol.intern("clojure.core")),
                                                          Symbol.intern("*compile-files*"), false).setDynamic();  
 
@@ -1703,7 +1706,8 @@ namespace clojure.lang
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "load")]
         public static object loadFile(string fileName)
-        {            FileInfo finfo = new FileInfo(fileName);
+        {
+            FileInfo finfo = new FileInfo(fileName);
             if (!finfo.Exists)
                 throw new FileNotFoundException("Cannot find file to load", fileName);
 
