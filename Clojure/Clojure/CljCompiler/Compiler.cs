@@ -1432,7 +1432,8 @@ namespace clojure.lang
 
         internal static string InitClassName(string sourcePath)
         {
-            return "__Init__$" + sourcePath.Replace(".", "/");
+			// munge slashes to $ to avoid mono lookup bug -nasser
+			return "__Init__$" + sourcePath.Replace(".", "/").Replace("/", "$");
         }
         
         public static void PushNS()
@@ -1645,20 +1646,7 @@ namespace clojure.lang
 
         private static Type GetTypeFromAssy(Assembly assy, string typeName)
         {
-            if (RT.IsRunningOnMono)
-            {
-                // I have no idea why Mono can't find our initializer types using Assembly.GetType(string).
-                // This is roll-your-own.
-                Type[] types = assy.GetExportedTypes();
-                foreach (Type t in types)
-                {
-                    if (t.Name.Equals(typeName))
-                        return t;
-                }
-                return null;
-            }
-            else
-                return assy.GetType(typeName);
+            return assy.GetType(typeName);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes")]
