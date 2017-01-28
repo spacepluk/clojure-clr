@@ -37,14 +37,14 @@ namespace clojure.lang.CljCompiler.Ast
               get { return _lb; }  
             } 
 
-            readonly Expr _handler;
-            internal Expr Handler
+            readonly BodyExpr _handler;
+            internal BodyExpr Handler
             {
               get { return _handler; }  
             } 
 
 
-            public CatchClause(Type type, LocalBinding lb, Expr handler)
+            public CatchClause(Type type, LocalBinding lb, BodyExpr handler)
             {
                 _type = type;
                 _lb = lb;
@@ -164,7 +164,7 @@ namespace clojure.lang.CljCompiler.Ast
                                 LocalBinding lb = Compiler.RegisterLocal(sym,
                                     (Symbol)(RT.second(f) is Symbol ? RT.second(f) : null),
                                     null,false);
-                                Expr handler = (new BodyExpr.Parser()).Parse(recursePcon, RT.next(RT.next(RT.next(f))));
+                                BodyExpr handler = (new BodyExpr.Parser()).Parse(recursePcon, RT.next(RT.next(RT.next(f)))) as BodyExpr;
                                 catches = catches.cons(new CatchClause(t, lb, handler)); ;
                             }
                             finally
@@ -244,7 +244,7 @@ namespace clojure.lang.CljCompiler.Ast
                 clause.Lb.LocalVar = ilg.DeclareLocal(clause.Type);
                 ilg.Emit(OpCodes.Stloc, clause.Lb.LocalVar);
                 clause.Handler.Emit(rhc, objx, ilg);
-                if (rhc != RHC.Statement)
+                if (rhc != RHC.Statement && !(clause.Handler.LastExpr is ThrowExpr))
                     ilg.Emit(OpCodes.Stloc, retLocal);
             }
 
