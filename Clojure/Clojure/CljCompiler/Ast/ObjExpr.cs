@@ -423,21 +423,6 @@ namespace clojure.lang.CljCompiler.Ast
             ilg.Emit(OpCodes.Ret);
         }
         
-        protected void EmitRequireNamespace(CljILGen ilg)
-        {
-            if(((Namespace)RT.CurrentNSVar.deref()).Name.ToString() != "clojure.core")
-            {
-                EmitValue(RT.RequireVar, ilg);
-                ilg.Emit(OpCodes.Call, Compiler.Method_Var_getRawRoot);
-                ilg.Emit(OpCodes.Castclass, typeof(IFn));
-                ilg.EmitNull();
-                ilg.EmitString(((Namespace)RT.CurrentNSVar.deref()).Name.Name);
-                ilg.EmitCall(Compiler.Method_Symbol_intern2);
-                ilg.Emit(OpCodes.Callvirt, Compiler.Methods_IFn_invoke[1]);
-                ilg.Emit(OpCodes.Pop);
-            }
-        }
-
         private void EmitLoadNsInitForDeftype(CljILGen ilg)
         {
             string nsname = ((Symbol)RT.second(Src)).Namespace;
