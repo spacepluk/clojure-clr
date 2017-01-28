@@ -36,7 +36,7 @@
   
   <Target Name="Build">
     <MSBuild Projects="ClojureCLR.sln"
-             Properties="Runtime=$(Runtime);PlatformSym=$(PlatformSym);DirectLinking=$(DirectLinking)"/>
+             Properties="RestorePackages=$(RestorePackages);Runtime=$(Runtime);PlatformSym=$(PlatformSym);DirectLinking=$(DirectLinking)"/>
   </Target>
   
   <Target Name="CompileTest" DependsOnTargets="Build">
