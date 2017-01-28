@@ -723,6 +723,17 @@ namespace clojure.lang
             throw new ArgumentException("Don't know how to create ISeq from: " + coll.GetType().FullName);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1709:IdentifiersShouldBeCasedCorrectly", MessageId = "can")]
+        static public bool canSeq(object coll)
+        {
+            return coll == null
+                || coll is ISeq
+                || coll is Seqable
+                || coll.GetType().IsArray
+                || coll is String
+                || coll is IEnumerable;
+        }
+
         static IEnumerable NullIterator()
         {
             yield break;
