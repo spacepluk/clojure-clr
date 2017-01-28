@@ -3648,6 +3648,7 @@ namespace clojure.lang
         /// Used in production systems when all namespaces are to be found in loaded assemblies.</remarks>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2211:NonConstantFieldsShouldNotBeVisible")]
         public static bool DisableFileLoad = false;
+        public static bool DisableEval = false;
     }
 
 }

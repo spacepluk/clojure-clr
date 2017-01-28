@@ -1352,7 +1352,7 @@ namespace clojure.lang
             return c;
         }
 
-        static GenContext _evalContext = CreateEvalContext("eval", false);
+        static GenContext _evalContext = RuntimeBootstrapFlag.DisableEval ? null : CreateEvalContext("eval", false);
         static public GenContext EvalContext { get { return _evalContext; } }
 
         static int _saveId = 0;
