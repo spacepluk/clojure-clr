@@ -2925,53 +2925,6 @@ namespace clojure.lang
                         return t1;
             }
 
-            // slow path, will succeed for display names (returned by Type.Name)
-            // e.g. "Transform"
-            foreach (Assembly assy1 in assys)
-            {
-                Type t1 = assy1.GetType(p, false);
-
-                if (IsRunningOnMono)
-                {
-                    // I do not know why Assembly.GetType fails to find types in our assemblies in Mono
-                    if (t1 == null)
-                    {
-#if CLR2
-					if (!(assy1 is AssemblyBuilder))
-#else
-                        if (!assy1.IsDynamic)
-#endif
-                        {
-                            try
-                            {
-
-                                foreach (Type tt in assy1.GetTypes())
-                                {
-                                    if (tt.Name.Equals(p))
-                                    {
-                                        t1 = tt;
-                                        break;
-                                    }
-                                }
-                            }
-                            catch (System.Reflection.ReflectionTypeLoadException)
-                            {
-                            }
-                        }
-                    }
-                }
-
-                if (t1 != null && !candidateTypes.Contains(t1))
-                    candidateTypes.Add(t1);
-            }
-
-            if (candidateTypes.Count == 0)
-                t = null;
-            else if (candidateTypes.Count == 1)
-                t = candidateTypes[0];
-            else // multiple, ambiguous
-                t = null;
-
             if (t == null && p.IndexOfAny(_triggerTypeChars) != -1)
                 t = ClrTypeSpec.GetTypeFromName(p);
 
