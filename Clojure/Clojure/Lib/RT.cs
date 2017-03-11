@@ -603,11 +603,11 @@ namespace clojure.lang
 
         static void DoInit()
         {
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
+            // Stopwatch sw = new Stopwatch();
+            // sw.Start();
             load("clojure/core");
-            sw.Stop();
-            Console.WriteLine("Initial clojure/core load: {0} milliseconds.", sw.ElapsedMilliseconds);
+            // sw.Stop();
+            // Console.WriteLine("Initial clojure/core load: {0} milliseconds.", sw.ElapsedMilliseconds);
 
             PostBootstrapInit();
         }
